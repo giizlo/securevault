@@ -1,0 +1,27 @@
+services:
+  api:
+    build: { context: .., dockerfile: deploy/Dockerfile }
+    env_file: .env                     # секреты - не в образе и не в git
+    read_only: true                    # неизменяемая ФС контейнера
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    depends_on: [db]
+    networks: [internal]               # наружу не опубликован
+  db:
+    image: postgres:16
+    environment: { POSTGRES_PASSWORD_FILE: /run/secrets/db_pw }
+    secrets: [db_pw]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    networks: [internal]
+  nginx:
+    image: nginx:1.27-alpine
+    ports: ["443:443", "80:80"]
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./certs:/etc/nginx/certs:ro
+    depends_on: [api]
+    networks: [internal, default]
+secrets:
+  db_pw: { file: ./secrets/db_pw.txt }
+volumes: { pgdata: {} }
+networks: { internal: { internal: true } }

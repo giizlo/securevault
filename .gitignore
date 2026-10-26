@@ -1,0 +1,6 @@
+.env
+*.db
+deploy/certs/
+deploy/secrets/
+__pycache__/
+.dev_secrets.json
